@@ -97,9 +97,11 @@ class decisionTree:
 		if data.empty:
 			#Partition found is empty
 			print('Nodo folha')
+			#It should get back to parent node here, if it is not the root node
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
 			print('Nodo folha')
+			#It should get back to parent node here, if it is not the root node
 		else:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
@@ -119,6 +121,8 @@ class decisionTree:
 				new_data = data[data[attr_max_gain]==attr_value]
 				print(new_data)
 				self.generateDecisionTree(new_data)
+			
+			#It should get back to parent node here, if it is not the root node
 
 
 
