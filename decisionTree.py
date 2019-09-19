@@ -1,6 +1,10 @@
-from Node import Node
+#from Node import Node
 import math
 import time
+from anytree import Node, RenderTree
+#from anytree.exporter import DotExporter
+#from graphviz import Source
+#from graphviz import render
 
 class decisionTree:
 	
@@ -10,11 +14,11 @@ class decisionTree:
 		self.intern_nodes = []
 		self.terminal_nodes = []
 
-	def addNode(self,node):
+	'''def addNode(self,node):
 		if self.root_node == None:
 			self.root_node = node
 		else:
-			print('Adding intern or terminal node')
+			print('Adding intern or terminal node')'''
 
 	############## Information Gain ##############
 	def getInformationGain(self, classe, attribute=None, new_data=None):
@@ -84,7 +88,7 @@ class decisionTree:
 
 		return list(sorted_info_gain.keys())[0]
 
-	def generateDecisionTree(self, new_data=None):
+	def generateDecisionTree(self, parent_node=None, new_data=None):
 		if new_data is None:
 			data = self.data
 		else:
@@ -96,29 +100,49 @@ class decisionTree:
 		#Verifying stop conditions
 		if data.empty:
 			#Partition found is empty
-			print('Nodo folha')
+			print('Nodo folha empty')
+			new_node = Node('vazio',parent_node)
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
-			print('Nodo folha')
+			print('Nodo folha pure')
+			new_node = Node(data[classe].unique(),parent_node)
 		else:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
 
 			#Initializing root_node
-			node = Node(attr_max_gain, data)
+			#node = Node(attr_max_gain, data)
 
 			#adding node to decision tree
-			self.addNode(node)
+			if parent_node == None:
+				self.root_node = Node(attr_max_gain)
+				new_parent_node = self.root_node
+			else:
+				new_parent_node = Node(attr_max_gain,parent_node)
+				#self.addNode(node)
 
 			#Getting the unique values of this attribute
 			unique_attr_values = self.data[attr_max_gain].unique()
 
 			#Iterating over the branches
 			for attr_value in unique_attr_values:
-				print('Generating decision tree from ' + attr_value)
+				print('Generating decision tree from ' + attr_max_gain + '-' + attr_value)
 				new_data = data[data[attr_max_gain]==attr_value]
 				print(new_data)
-				self.generateDecisionTree(new_data)
+				self.generateDecisionTree(new_parent_node, new_data)
+
+			return self.root_node
+
+	def renderDecisionTree(self,root_node):
+		for pre, fill, node in RenderTree(root_node):
+			print("%s%s" % (pre, node.name))
+
+	#def exportDecisionTreeToPNG(self,root_node,path):
+		#DotExporter(root_node).to_dotfile('udo.dot')
+		#Source.from_file('udo.dot')
+		#render('dot', 'png', 'udo.dot')
+		#DotExporter(root_node).to_picture(path)
+		#DotExporter(root_node,nodeattrfunc=lambda node: 'label="{}"'.format(node.name)).to_picture("graph.png")
 
 
 
