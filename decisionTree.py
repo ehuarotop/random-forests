@@ -8,20 +8,15 @@ from anytree import Node, RenderTree
 
 class decisionTree:
 	
-	def __init__(self, data):
+	def __init__(self, data, data_desc):
 		self.data = data
+		self.data_desc = data_desc
 		self.root_node = None
 		self.intern_nodes = []
 		self.terminal_nodes = []
 
-	'''def addNode(self,node):
-		if self.root_node == None:
-			self.root_node = node
-		else:
-			print('Adding intern or terminal node')'''
-
 	############## Information Gain ##############
-	def getInformationGain(self, classe, attribute=None, new_data=None):
+	def getInformationGain(self, classe, attribute=None,type_attr=None,new_data=None):
 		if new_data is None:
 			data = self.data
 		else:
@@ -42,25 +37,72 @@ class decisionTree:
 			entropy += -(count_instances/total)*math.log(count_instances/total, 2)
 
 		############### Getting information gain for the specific attribute ###############
+		#Getting all the examples for the specific attribute
 		attr_instances = data[attribute]
+		#Getting the total number of examples of the specific attribute.
 		total = attr_instances.count()
-		attr_unique_values = attr_instances.unique()
 
+		#Initializing general information gain
 		information_gain = 0.0
 
-		for attr_value in attr_unique_values:
-			class_instances = data[data[attribute]==attr_value][classe]
-			class_unique_values = class_instances.unique()
-			class_attr_total = class_instances.count()
+		#Getting unique instances based on the type of attribute
+		if type_attr=="nominal":
+			attr_unique_values = attr_instances.unique()
 
-			attr_information_gain = 0.0
-			
+			#Getting information gain for each value of the specific attribute
+			for attr_value in attr_unique_values:
+				class_instances = data[data[attribute]==attr_value][classe]
+				class_unique_values = class_instances.unique()
+				class_attr_total = class_instances.count()
+
+				attr_information_gain = 0.0
+				
+				#attr value information gain
+				for class_value in class_unique_values:
+					count_instances = class_instances.where(class_instances == class_value).count()
+					attr_information_gain += -(count_instances/class_attr_total)*math.log(count_instances/class_attr_total,2)
+
+				information_gain += (class_attr_total/total)*attr_information_gain
+		elif type_attr=="numeric":
+			#Getting mean of the example values of this attribute.
+			mean_attr_instances = attr_instances.mean()
+
+			#Splitting examples values in "less than" and "greater than" the mean
+			less_than_values = data[data[attribute] < mean_attr_instances]
+			greater_than_values = data[data[attribute] >= mean_attr_instances]
+
+			####### Getting information gain value manually for each new partition #######
+
+			################### Getting information gain for "less than" partition
+			class_instances_less = less_than_values[classe]
+			class_unique_values_less = class_instances_less.unique()
+			class_attr_total_less = class_instances_less.count()
+
+			attr_information_gain_less = 0.0
+
 			#attr value information gain
-			for class_value in class_unique_values:
-				count_instances = class_instances.where(class_instances == class_value).count()
-				attr_information_gain += -(count_instances/class_attr_total)*math.log(count_instances/class_attr_total,2)
+			for class_value_less in class_unique_values_less:
+				count_instances_less = class_instances_less.where(class_instances_less == class_value_less).count()
+				attr_information_gain_less += -(count_instances_less/class_attr_total_less)*math.log(count_instances_less/class_attr_total_less,2)
 
-			information_gain += (class_attr_total/total)*attr_information_gain
+			#Updating information gain for the "less than" partition
+			information_gain += (class_attr_total_less/total)*attr_information_gain_less
+
+			################### Getting information gain for "greater than" partition
+			class_instances_greater = greater_than_values[classe]
+			class_unique_values_greater = class_instances_greater.unique()
+			class_attr_total_greater = class_instances_greater.count()
+
+			attr_information_gain_greater = 0.0
+
+			#attr value information gain
+			for class_value_greater in class_unique_values_greater:
+				count_instances_greater = class_instances_greater.where(class_instances_greater == class_value_greater).count()
+				attr_information_gain_greater += -(count_instances_greater/class_attr_total_greater)*math.log(count_instances_greater/class_attr_total_greater,2)
+
+			#Updating information gain for the "less than" partition
+			information_gain += (class_attr_total_greater/total)*attr_information_gain_greater
+
 
 		#Getting information gain substracting from entropy initially calculated
 		information_gain = entropy - information_gain
@@ -81,7 +123,8 @@ class decisionTree:
 		info_gain = {}
 
 		for attribute in attributes:
-			attr_gain = self.getInformationGain(classe, attribute, data)
+			#Getting information gain for the current attribute indicating his attribute type desc.
+			attr_gain = self.getInformationGain(classe, attribute, self.data_desc[attribute],data)
 			info_gain[attribute] = attr_gain
 
 		sorted_info_gain = dict(sorted(info_gain.items(), key=lambda kv: kv[1], reverse=True))
@@ -110,27 +153,51 @@ class decisionTree:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
 
-			#Initializing root_node
-			#node = Node(attr_max_gain, data)
+			if self.data_desc[attr_max_gain] == "nominal":
+				#adding node to decision tree
+				if parent_node == None:
+					self.root_node = Node(attr_max_gain)
+					new_parent_node = self.root_node
+				else:
+					new_parent_node = Node(attr_max_gain,parent_node)
+					#self.addNode(node)
 
-			#adding node to decision tree
-			if parent_node == None:
-				self.root_node = Node(attr_max_gain)
-				new_parent_node = self.root_node
-			else:
-				new_parent_node = Node(attr_max_gain,parent_node)
-				#self.addNode(node)
+				#Getting the unique values of this attribute
+				unique_attr_values = data[attr_max_gain].unique()
 
-			#Getting the unique values of this attribute
-			unique_attr_values = self.data[attr_max_gain].unique()
+				#Iterating over the branches
+				for attr_value in unique_attr_values:
+					print('Generating decision tree from ' + str(attr_max_gain) + '-' + str(attr_value))
+					new_data = data[data[attr_max_gain]==attr_value]
+					print(new_data)
+					#It should get back to parent node here, if it is not the root node
+					self.generateDecisionTree(new_parent_node, new_data)
+			elif self.data_desc[attr_max_gain] == "numeric":
+				#Getting mean of the example values of attr_max_gain.
+				mean_attr = data[attr_max_gain].mean()
 
-			#Iterating over the branches
-			for attr_value in unique_attr_values:
-				print('Generating decision tree from ' + attr_max_gain + '-' + attr_value)
-				new_data = data[data[attr_max_gain]==attr_value]
-				print(new_data)
-				#It should get back to parent node here, if it is not the root node
-				self.generateDecisionTree(new_parent_node, new_data)
+				#adding node to decision tree
+				if parent_node == None:
+					self.root_node = Node(attr_max_gain + "--" + str(mean_attr))
+					new_parent_node = self.root_node
+				else:
+					new_parent_node = Node(attr_max_gain + "--" + str(mean_attr),parent_node)
+					#self.addNode(node)
+
+				#Splitting examples values in "less than" and "greater than" the mean
+				less_than_values = data[data[attr_max_gain] < mean_attr]
+				greater_than_values = data[data[attr_max_gain] >= mean_attr]
+
+				print('Generating decision tree from ' + str(attr_max_gain) + '-' + "less-" + str(mean_attr))
+				print(less_than_values)
+				#Generate decision tree for less than values data
+				self.generateDecisionTree(new_parent_node, less_than_values)
+
+				print('Generating decision tree from ' + str(attr_max_gain) + '-' + "greater-" + str(mean_attr))
+				print(greater_than_values)
+				#Generate decision tree for less than values data
+				self.generateDecisionTree(new_parent_node, greater_than_values)
+
 
 			return self.root_node
 

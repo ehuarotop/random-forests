@@ -1,0 +1,23 @@
+{
+	"checking_status" : "nominal",
+	"duration" : "numeric",
+	"credit_history" : "nominal",
+	"purpose" : "nominal",
+	"credit_amount" : "numeric",
+	"savings_status" : "nominal",
+	"employment" : "nominal",
+	"installment_commitment" : "numeric",
+	"personal_status" : "nominal",
+	"other_parties" : "nominal",
+	"residence_since" : "numeric",
+	"property_magnitude" : "nominal",
+	"age" : "numeric",
+	"other_payment_plans" : "nominal",
+	"housing" : "nominal",
+	"existing_credits" : "numeric",
+	"job" : "nominal",
+	"num_dependents" : "numeric",
+	"own_telephone" : "nominal",
+	"foreign_worker" : "nominal",
+	"class" : "class"
+}

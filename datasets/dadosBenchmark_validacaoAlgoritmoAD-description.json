@@ -1,0 +1,7 @@
+{
+	"Tempo" : "nominal",
+	"Temperatura" : "nominal",
+	"Umidade": "nominal",
+	"Ventoso":"nominal",
+	"Joga":"class"
+}
