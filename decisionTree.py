@@ -1,10 +1,7 @@
 #from Node import Node
 import math
 import time
-from anytree import Node, RenderTree
-#from anytree.exporter import DotExporter
-#from graphviz import Source
-#from graphviz import render
+from anytree import AnyNode, RenderTree
 
 class decisionTree:
 	
@@ -131,7 +128,7 @@ class decisionTree:
 
 		return list(sorted_info_gain.keys())[0]
 
-	def generateDecisionTree(self, parent_node=None, new_data=None):
+	def generateDecisionTree(self, parent_node=None, new_data=None, branch=None):
 		if new_data is None:
 			data = self.data
 		else:
@@ -144,11 +141,11 @@ class decisionTree:
 		if data.empty:
 			#Partition found is empty
 			print('Nodo folha empty')
-			new_node = Node('vazio',parent_node)
+			new_node = AnyNode(id='vazio',parent=parent_node, branch=branch)
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
-			print('Nodo folha pure')
-			new_node = Node(data[classe].unique(),parent_node)
+			#print('Nodo folha pure')
+			new_node = AnyNode(id=data[classe].unique(),parent=parent_node, branch=branch)
 		else:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
@@ -156,65 +153,45 @@ class decisionTree:
 			if self.data_desc[attr_max_gain] == "nominal":
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = Node(attr_max_gain)
+					self.root_node = AnyNode(id=attr_max_gain)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = Node(attr_max_gain,parent_node)
-					#self.addNode(node)
+					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node,branch=branch)
 
 				#Getting the unique values of this attribute
 				unique_attr_values = data[attr_max_gain].unique()
 
 				#Iterating over the branches
 				for attr_value in unique_attr_values:
-					print('Generating decision tree from ' + str(attr_max_gain) + '-' + str(attr_value))
+					#print('Generating decision tree from ' + str(attr_max_gain) + '-' + str(attr_value))
 					new_data = data[data[attr_max_gain]==attr_value]
-					print(new_data)
-					#It should get back to parent node here, if it is not the root node
-					self.generateDecisionTree(new_parent_node, new_data)
+					self.generateDecisionTree(new_parent_node, new_data,attr_value)
+			
 			elif self.data_desc[attr_max_gain] == "numeric":
 				#Getting mean of the example values of attr_max_gain.
 				mean_attr = data[attr_max_gain].mean()
 
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = Node(attr_max_gain + "--" + str(mean_attr))
+					self.root_node = AnyNode(id=attr_max_gain)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = Node(attr_max_gain + "--" + str(mean_attr),parent_node)
-					#self.addNode(node)
+					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch)
 
 				#Splitting examples values in "less than" and "greater than" the mean
 				less_than_values = data[data[attr_max_gain] < mean_attr]
 				greater_than_values = data[data[attr_max_gain] >= mean_attr]
 
-				print('Generating decision tree from ' + str(attr_max_gain) + '-' + "less-" + str(mean_attr))
-				print(less_than_values)
 				#Generate decision tree for less than values data
-				self.generateDecisionTree(new_parent_node, less_than_values)
+				self.generateDecisionTree(new_parent_node, less_than_values,"left-branch")
 
-				print('Generating decision tree from ' + str(attr_max_gain) + '-' + "greater-" + str(mean_attr))
-				print(greater_than_values)
 				#Generate decision tree for less than values data
-				self.generateDecisionTree(new_parent_node, greater_than_values)
+				self.generateDecisionTree(new_parent_node, greater_than_values, "right-branch")
 
 
 			return self.root_node
 
 	def renderDecisionTree(self,root_node):
-		for pre, fill, node in RenderTree(root_node):
-			print("%s%s" % (pre, node.name))
-
-	#def exportDecisionTreeToPNG(self,root_node,path):
-		#DotExporter(root_node).to_dotfile('udo.dot')
-		#Source.from_file('udo.dot')
-		#render('dot', 'png', 'udo.dot')
-		#DotExporter(root_node).to_picture(path)
-		#DotExporter(root_node,nodeattrfunc=lambda node: 'label="{}"'.format(node.name)).to_picture("graph.png")
-
-
-
-
-
-
-
+		print(RenderTree(root_node))
+		#for pre, fill, node in RenderTree(root_node):
+			#print("%s%s" % (pre, node.name))
