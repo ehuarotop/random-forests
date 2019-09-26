@@ -145,7 +145,7 @@ class decisionTree:
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
 			#print('Nodo folha pure')
-			new_node = AnyNode(id=data[classe].unique(),parent=parent_node, branch=branch)
+			new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
 		else:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
@@ -195,3 +195,27 @@ class decisionTree:
 		print(RenderTree(root_node))
 		#for pre, fill, node in RenderTree(root_node):
 			#print("%s%s" % (pre, node.name))
+
+	def predict_instance(self,instance, root_node=None):
+		#Initializing prediction to None
+		prediction = None
+
+		#Verifying root_node (default self.root_node)
+		if root_node is None:
+			current_root_node = self.root_node
+		else:
+			current_root_node = root_node
+
+		#Stop condition (leaf node)
+		if current_root_node.is_leaf:
+			prediction = current_root_node.id
+		else:
+			#Iterate recursively between children of the current root node
+			branches = []
+			for children in current_root_node.children:
+				if children.branch == instance[current_root_node.id]:
+					current_root_node = children
+					prediction = self.predict_instance(instance, current_root_node)
+					return prediction
+
+		return prediction
