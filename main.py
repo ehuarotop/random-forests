@@ -1,5 +1,6 @@
 import Utils
 from decisionTree import decisionTree as dt
+from randomForest import randomForest as rf
 
 #datasets/phpOkU53r.csv
 #datasets/dadosBenchmark_validacaoAlgoritmoAD.csv
@@ -9,9 +10,16 @@ from decisionTree import decisionTree as dt
 def main():
 	data, data_desc = Utils.get_data_from_csv("datasets/dadosBenchmark_validacaoAlgoritmoAD.csv", ";")
 	det = dt(data, data_desc)
-	root_node = det.generateDecisionTree()
-	det.renderDecisionTree(root_node)
+
+	####### decisionTree tests ###############
+	#root_node = det.generateDecisionTree()
+	#det.renderDecisionTree(root_node)
 	#prediction = det.predict_instance(data.iloc[0])
+
+	rforest = rf(10,data, data_desc)
+	bootstraps = rforest.bootstrap(100, data)
+
+	print(bootstraps[5])
 
 if __name__ == "__main__":
 	main()
