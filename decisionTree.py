@@ -2,6 +2,7 @@
 import math
 import time
 from anytree import AnyNode, RenderTree
+import time
 
 class decisionTree:
 	
@@ -128,7 +129,7 @@ class decisionTree:
 
 		return list(sorted_info_gain.keys())[0]
 
-	def generateDecisionTree(self, parent_node=None, new_data=None, branch=None):
+	def generateDecisionTree(self, parent_node=None, new_data=None, branch=None, mean_attr=None):
 		if new_data is None:
 			data = self.data
 		else:
@@ -144,8 +145,15 @@ class decisionTree:
 			new_node = AnyNode(id='vazio',parent=parent_node, branch=branch)
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
-			#print('Nodo folha pure')
-			new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
+			#Case: the bootstrap generated have elements only from one class
+			#only one node will be generated for this decisionTree
+			if self.root_node is None:
+				#print('Nodo folha pure')
+				self.root_node = AnyNode(id=data[classe].unique()[0])
+				new_node = self.root_node
+			else:
+				#normal leaf node.
+				new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
 		else:
 			#Getting attribute that maximizes information gain
 			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
@@ -173,21 +181,20 @@ class decisionTree:
 
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = AnyNode(id=attr_max_gain)
+					self.root_node = AnyNode(id=attr_max_gain, mean_attr=mean_attr)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch)
+					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch, mean_attr=mean_attr)
 
 				#Splitting examples values in "less than" and "greater than" the mean
 				less_than_values = data[data[attr_max_gain] < mean_attr]
 				greater_than_values = data[data[attr_max_gain] >= mean_attr]
 
 				#Generate decision tree for less than values data
-				self.generateDecisionTree(new_parent_node, less_than_values,"left-branch")
+				self.generateDecisionTree(new_parent_node, less_than_values,"left-branch",mean_attr)
 
 				#Generate decision tree for less than values data
-				self.generateDecisionTree(new_parent_node, greater_than_values, "right-branch")
-
+				self.generateDecisionTree(new_parent_node, greater_than_values, "right-branch",mean_attr)
 
 			return self.root_node
 
@@ -211,11 +218,26 @@ class decisionTree:
 			prediction = current_root_node.id
 		else:
 			#Iterate recursively between children of the current root node
-			branches = []
-			for children in current_root_node.children:
-				if children.branch == instance[current_root_node.id]:
-					current_root_node = children
-					prediction = self.predict_instance(instance, current_root_node)
-					return prediction
+			if self.data_desc[current_root_node.id] == "nominal":
+				#nominal case
+				for children in current_root_node.children:
+					if children.branch == instance[current_root_node.id]:
+						current_root_node = children
+						prediction = self.predict_instance(instance, current_root_node)
+						return prediction
+			elif self.data_desc[current_root_node.id] == "numeric":
+				#Numeric case
+				if instance[current_root_node.id] < current_root_node.mean_attr:
+					for children in current_root_node.children:
+						if children.branch == "left-branch":
+							current_root_node = children
+							prediction = self.predict_instance(instance,current_root_node)
+							return prediction
+				elif instance[current_root_node.id] >= current_root_node.mean_attr:
+					for children in current_root_node.children:
+						if children.branch == "right-branch":
+							current_root_node = children
+							prediction = self.predict_instance(instance,current_root_node)
+							return prediction
 
 		return prediction
