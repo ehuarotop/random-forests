@@ -27,8 +27,8 @@ class randomForest:
 				#gererating random numbers between 0 and data.shape[0]-1
 				indexs_used.append(random.randint(0,data.shape[0]-1))
 
-			#removing repeated elements
-			indexs_used = sorted(indexs_used)
+			#sorting
+			#indexs_used = sorted(indexs_used)
 
 			#getting elements not used
 			indexs_not_used = list(np.setdiff1d(all_indexs, indexs_used))
@@ -67,6 +67,7 @@ class randomForest:
 		bootstraps = self.bootstrap(self.n_tree, self.data)
 
 		for bootstrap in bootstraps:
+			#print('New bootstrap ################################################')
 			#Creating decisionTree object from training data.
 			det = dt(bootstrap[0], self.data_desc)
 

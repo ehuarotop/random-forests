@@ -2,7 +2,7 @@
 import math
 import time
 from anytree import AnyNode, RenderTree
-import time
+import random
 
 class decisionTree:
 	
@@ -107,7 +107,25 @@ class decisionTree:
 		
 		return information_gain
 
-	def getAttributeWithMaxInfoGain(self, new_data=None):
+	def getRandomAttributes(self, data, n_attr):
+		'''Getting "n_attr" attributes randomly from data ----> "Amostragem de atributos"'''
+		data_attributes = list(data.columns.values)[:-1]
+
+		random_attributes = []
+
+		for i in range(n_attr):
+			random_attribute = random.choice(data_attributes)
+			if random_attribute not in random_attributes:
+				random_attributes.append(random_attribute)
+			else:
+				while random_attribute in random_attributes:
+					random_attribute = random.choice(data_attributes)
+
+				random_attributes.append(random_attribute)
+
+		return random_attributes
+
+	def getAttributeWithMaxInfoGain(self, list_attr, new_data=None):
 		#root node case
 		if new_data is None:
 			data = self.data
@@ -115,19 +133,22 @@ class decisionTree:
 			data = new_data
 		
 		#Getting attributes (assuming it has class predictions in the last element)
-		attributes = list(data.columns.values)[:-1]
+		#print('Using only: ', list_attr)
+		#attributes = list(data.columns.values)[:-1]
 		classe = list(data.columns.values)[-1]
 
 		info_gain = {}
 
-		for attribute in attributes:
+		for attribute in list_attr:
 			#Getting information gain for the current attribute indicating his attribute type desc.
 			attr_gain = self.getInformationGain(classe, attribute, self.data_desc[attribute],data)
 			info_gain[attribute] = attr_gain
 
 		sorted_info_gain = dict(sorted(info_gain.items(), key=lambda kv: kv[1], reverse=True))
 
-		return list(sorted_info_gain.keys())[0]
+		#print(list(sorted_info_gain.keys())[0], 'ganho de informacao: ' + str(sorted_info_gain[list(sorted_info_gain.keys())[0]]))
+
+		return list(sorted_info_gain.keys())[0], sorted_info_gain[list(sorted_info_gain.keys())[0]]
 
 	def generateDecisionTree(self, parent_node=None, new_data=None, branch=None, mean_attr=None):
 		if new_data is None:
@@ -155,16 +176,32 @@ class decisionTree:
 				#normal leaf node.
 				new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
 		else:
+			#Getting random attributes
+			attr_list = self.getRandomAttributes(data, 2)
+
 			#Getting attribute that maximizes information gain
-			attr_max_gain = self.getAttributeWithMaxInfoGain(data)
+			attr_max_gain, max_gain = self.getAttributeWithMaxInfoGain(attr_list, data)
+
+			#if not have information gain
+			if max_gain == 0.0:
+				if self.root_node is None:
+					majority_class = data[classe].value_counts().idxmax()
+					self.root_node = AnyNode(id=majority_class)
+					new_node = self.root_node
+				else:
+					#normal leaf node.
+					new_node = AnyNode(id=parent_node.majority_class,parent=parent_node, branch=branch)
+
+			#getting majority class for the attribute with max info gain
+			majority_class = data[classe].value_counts().idxmax()
 
 			if self.data_desc[attr_max_gain] == "nominal":
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = AnyNode(id=attr_max_gain)
+					self.root_node = AnyNode(id=attr_max_gain, majority_class=majority_class)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node,branch=branch)
+					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node,branch=branch, majority_class=majority_class)
 
 				#Getting the unique values of this attribute
 				unique_attr_values = data[attr_max_gain].unique()
@@ -181,10 +218,10 @@ class decisionTree:
 
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = AnyNode(id=attr_max_gain, mean_attr=mean_attr)
+					self.root_node = AnyNode(id=attr_max_gain, mean_attr=mean_attr, majority_class=majority_class)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch, mean_attr=mean_attr)
+					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch, mean_attr=mean_attr, majority_class=majority_class)
 
 				#Splitting examples values in "less than" and "greater than" the mean
 				less_than_values = data[data[attr_max_gain] < mean_attr]
@@ -239,5 +276,14 @@ class decisionTree:
 							current_root_node = children
 							prediction = self.predict_instance(instance,current_root_node)
 							return prediction
+
+
+			if prediction == None:
+				#print('prediction None ###############')
+				#returning the majority class from the parent node (in case the decisionTree don't manage to get a prediction)
+				#self.renderDecisionTree(self.root_node)
+				#print(current_root_node)
+				return current_root_node.majority_class
+		#self.renderDecisionTree(self.root_node)
 
 		return prediction
