@@ -74,17 +74,18 @@ class randomForest:
 			#building actual decisionTree
 			root_node = det.generateDecisionTree()
 
-			#det.renderDecisionTree(root_node)
-
 			#Testing accuracy of the decisionTree against test data.
-			accuracy = self.testDecisionTree(det, bootstrap[1])
+			#accuracy = self.testDecisionTree(det, bootstrap[1])
 
 			#If accuracy is greater than 0.5 the decisionTree will be added
 			#to the random forest, if not decisionTree is discarded.
-			if accuracy >= 0.5:
-				decisionTrees.append(det)
-			else:
-				print('Discarding tree with less than 0.5 of accuracy')
+			#if accuracy >= 0.5:
+			#	decisionTrees.append(det)
+			#else:
+			#	print('Discarding tree with less than 0.5 of accuracy')
+
+			##### Using all the decision Trees generated for the random forest.
+			decisionTrees.append(det)
 
 		self.decisionTrees = decisionTrees
 

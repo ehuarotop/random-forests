@@ -1,6 +1,7 @@
 import Utils
 from decisionTree import decisionTree as dt
 from randomForest import randomForest as rf
+import time
 
 #datasets/phpOkU53r.csv
 #datasets/dadosBenchmark_validacaoAlgoritmoAD.csv
@@ -8,18 +9,15 @@ from randomForest import randomForest as rf
 #datasets/dataset_191_wine.csv
 
 def main():
-	data, data_desc = Utils.get_data_from_csv("datasets/dadosBenchmark_validacaoAlgoritmoAD.csv", ";")
-	det = dt(data, data_desc)
+	#Getting time at the beginning of the execution
+	start_time = time.time()
 
-	#Initializing random forest
-	rforest = rf(5,data, data_desc)
-	#Training the model
-	rforest.fit()
+	data, data_desc = Utils.get_data_from_csv("datasets/dataset_191_wine.csv", ",")
 
-	#Performing some predictions
-	prediction = rforest.predict(data.iloc[[0,1]])
-	#print(data.iloc[[0,1]])
-	print(prediction)
+	accuracies = Utils.cross_validation(data,data_desc, 10, 10, 2)
+
+	#taking time at the end of the execution
+	print("--- Cross validation executed in %s seconds ---" % (time.time() - start_time))
 
 if __name__ == "__main__":
 	main()

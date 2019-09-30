@@ -1,4 +1,3 @@
-#from Node import Node
 import math
 import time
 from anytree import AnyNode, RenderTree
@@ -10,8 +9,8 @@ class decisionTree:
 		self.data = data
 		self.data_desc = data_desc
 		self.root_node = None
-		self.intern_nodes = []
-		self.terminal_nodes = []
+		#self.intern_nodes = []
+		#self.terminal_nodes = []
 
 	############## Information Gain ##############
 	def getInformationGain(self, classe, attribute=None,type_attr=None,new_data=None):
@@ -107,9 +106,13 @@ class decisionTree:
 		
 		return information_gain
 
-	def getRandomAttributes(self, data, n_attr):
+	def getRandomAttributes(self, data, n_attr=None):
 		'''Getting "n_attr" attributes randomly from data ----> "Amostragem de atributos"'''
 		data_attributes = list(data.columns.values)[:-1]
+
+		#Considering only the square root of the number of attributes.
+		if n_attr is None:
+			n_attr = round(math.sqrt(len(data_attributes)))
 
 		random_attributes = []
 
@@ -177,7 +180,7 @@ class decisionTree:
 				new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
 		else:
 			#Getting random attributes
-			attr_list = self.getRandomAttributes(data, 2)
+			attr_list = self.getRandomAttributes(data)
 
 			#Getting attribute that maximizes information gain
 			attr_max_gain, max_gain = self.getAttributeWithMaxInfoGain(attr_list, data)
