@@ -68,15 +68,10 @@ def cross_validation(data, data_desc, n_trees, kfolds, n_cross_val=1):
 			#getting predictions from the random forest.
 			predictions = rforest.predict(test_data)
 
-			#### Comparing predictions with actual class values from test_data
-			#### to get mean accuracy and standard deviation
-			correct_predictions = 0
-			for index,row in test_data.iterrows():
-				if row[-1] == predictions[index]:
-					correct_predictions += 1
-
-			accuracy = round(correct_predictions / test_data.shape[0], 3)
+			#Getting confusion matrix and some other metrics to validate the model
 			cf = getConfusionMatrix(predictions, test_data, unique_class_values)
+			accuracy, recalls, precisions, F1s = calcMetrics(cf, unique_class_values)
+			print(accuracy, recalls, precisions, F1s)
 			accuracies.append(accuracy)
 			total_accuracies.append(accuracy)
 
@@ -107,11 +102,39 @@ def getConfusionMatrix(predictions, test_data, unique_class_values):
 				x_val = index2
 			if test_data_class == value:
 				y_val = index2
-			#print(predictions[index], type(predictions[index]), row[-1], type(row[-1]), value, type(value))
 
 		confusion_matrix[x_val][y_val] += 1
 
-	print(confusion_matrix)
+	return confusion_matrix
+
+def calcMetrics(confusion_matrix, unique_class_values):
+	#Calculating accuracy
+	accuracy = np.sum(np.diagonal(confusion_matrix)) / np.sum(confusion_matrix)
+
+	#Calculating recall
+	recalls = []
+	for index, value in enumerate(unique_class_values):
+		row = confusion_matrix[index, :]
+		recall = confusion_matrix[index][index] / row.sum()
+		recalls.append(recall)
+
+	#Calculating precision
+	precisions = []
+	for index, value in enumerate(unique_class_values):
+		column = confusion_matrix[:,index]
+		precision = confusion_matrix[index][index] / column.sum()
+		precisions.append(precision)
+
+	#Calculating F1-measure
+	F1s = []
+	for index, value in enumerate(unique_class_values):
+		F1 = 2 * (precisions[index] * recalls[index]) / (precisions[index] + recalls[index])
+		F1s.append(F1)
+
+	return accuracy, recalls, precisions, F1s
+
+
+
 
 
 		
