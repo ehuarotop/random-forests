@@ -76,6 +76,7 @@ def cross_validation(data, data_desc, n_trees, kfolds, n_cross_val=1):
 					correct_predictions += 1
 
 			accuracy = round(correct_predictions / test_data.shape[0], 3)
+			cf = getConfusionMatrix(predictions, test_data, unique_class_values)
 			accuracies.append(accuracy)
 			total_accuracies.append(accuracy)
 
@@ -84,5 +85,33 @@ def cross_validation(data, data_desc, n_trees, kfolds, n_cross_val=1):
 	print("Total Accuracy: " + str(np.mean(total_accuracies)) + " ± " + str(np.std(total_accuracies)))
 
 	return total_accuracies
+
+
+def getConfusionMatrix(predictions, test_data, unique_class_values):
+	confusion_matrix = np.zeros((len(unique_class_values), len(unique_class_values)), dtype=int)
+
+	#ordering the class values
+	unique_class_values.sort()
+
+	for index, row in test_data.iterrows():
+		x_val = -1
+		y_val = -1
+
+		for index2, value in enumerate(unique_class_values):
+			if isinstance(row[-1], np.float64):
+				test_data_class = np.int64(row[-1])
+			else:
+				test_data_class = row[-1]
+
+			if predictions[index] == value:
+				x_val = index2
+			if test_data_class == value:
+				y_val = index2
+			#print(predictions[index], type(predictions[index]), row[-1], type(row[-1]), value, type(value))
+
+		confusion_matrix[x_val][y_val] += 1
+
+	print(confusion_matrix)
+
 
 		

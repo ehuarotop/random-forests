@@ -195,6 +195,9 @@ class decisionTree:
 					#normal leaf node.
 					new_node = AnyNode(id=parent_node.majority_class,parent=parent_node, branch=branch)
 
+				#If not have information gain, return root_node.
+				return self.root_node
+
 			#getting majority class for the attribute with max info gain
 			majority_class = data[classe].value_counts().idxmax()
 
