@@ -1,8 +1,8 @@
 anytree==2.6.0
+Click==7.0
 graphviz==0.13
 numpy==1.17.2
 pandas==0.25.1
-pkg-resources==0.0.0
 python-dateutil==2.8.0
 pytz==2019.2
 six==1.12.0
