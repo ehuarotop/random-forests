@@ -3,6 +3,7 @@ from decisionTree import decisionTree as dt
 from randomForest import randomForest as rf
 import time
 import click
+import os
 
 #datasets/phpOkU53r.csv
 #datasets/dadosBenchmark_validacaoAlgoritmoAD.csv
@@ -22,6 +23,7 @@ def main(dataset, ntree, kfolds, repeat_cv):
 	#Getting time at the beginning of the execution
 	start_time = time.time()
 
+	#Declaring all the dataset available to test
 	datasets = ['datasets/dadosBenchmark_validacaoAlgoritmoAD.csv', 'datasets/phpOkU53r.csv',
 				'datasets/dataset_31_credit-g.csv', 'datasets/dataset_191_wine.csv']
 
@@ -29,15 +31,20 @@ def main(dataset, ntree, kfolds, repeat_cv):
 
 	print('Using dataset: ' + dataset_path)
 	print('Using ' + str(ntree) + ' decision Trees in each random forest (each cross validation)')
-	print('Using ' + str(kfolds) + ' folds for each cross validatio')
+	print('Using ' + str(kfolds) + ' folds for each cross validation')
 	print('Executing '+ str(repeat_cv) + ' repeated cross validations')
 
+	#Getting data from csv
 	if dataset == 1:
 		data, data_desc = Utils.get_data_from_csv(dataset_path, ";")
 	else:
 		data, data_desc = Utils.get_data_from_csv(dataset_path, ",")
 
-	accuracies = Utils.cross_validation(data,data_desc, ntree, kfolds, repeat_cv)
+	#getting dataset filename
+	dataset_name = os.path.split(dataset_path)[1]
+
+	#Performing repeated cross validation
+	Utils.cross_validation(dataset_name, data,data_desc, ntree, kfolds, repeat_cv)
 
 	#taking time at the end of the execution
 	print("--- Cross validation executed in %s seconds ---" % (time.time() - start_time))

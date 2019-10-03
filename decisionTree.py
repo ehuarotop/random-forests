@@ -9,8 +9,6 @@ class decisionTree:
 		self.data = data
 		self.data_desc = data_desc
 		self.root_node = None
-		#self.intern_nodes = []
-		#self.terminal_nodes = []
 
 	############## Information Gain ##############
 	def getInformationGain(self, classe, attribute=None,type_attr=None,new_data=None):
