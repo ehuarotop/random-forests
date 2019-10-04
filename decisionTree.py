@@ -2,13 +2,17 @@ import math
 import time
 from anytree import AnyNode, RenderTree
 import random
+from anytree.exporter import DotExporter
 
 class decisionTree:
 	
-	def __init__(self, data, data_desc):
+	def __init__(self, data, data_desc, attributes_to_consider=None,verbose=None):
 		self.data = data
 		self.data_desc = data_desc
 		self.root_node = None
+		self.count_nodes = 0
+		self.verbose = verbose
+		self.attributes_to_consider = attributes_to_consider
 
 	############## Information Gain ##############
 	def getInformationGain(self, classe, attribute=None,type_attr=None,new_data=None):
@@ -147,7 +151,7 @@ class decisionTree:
 
 		sorted_info_gain = dict(sorted(info_gain.items(), key=lambda kv: kv[1], reverse=True))
 
-		#print(list(sorted_info_gain.keys())[0], 'ganho de informacao: ' + str(sorted_info_gain[list(sorted_info_gain.keys())[0]]))
+		print('Information Gains: ', sorted_info_gain)
 
 		return list(sorted_info_gain.keys())[0], sorted_info_gain[list(sorted_info_gain.keys())[0]]
 
@@ -164,34 +168,42 @@ class decisionTree:
 		if data.empty:
 			#Partition found is empty
 			print('Nodo folha empty')
-			new_node = AnyNode(id='vazio',parent=parent_node, branch=branch)
+			self.count_nodes += 1
+			new_node = AnyNode(name=str(self.count_nodes), label='vazio',parent=parent_node, branch=branch)
 		if len(data[classe].unique())==1:
 			#Partition found is 'Pure', only one value
 			#Case: the bootstrap generated have elements only from one class
 			#only one node will be generated for this decisionTree
 			if self.root_node is None:
 				#print('Nodo folha pure')
-				self.root_node = AnyNode(id=data[classe].unique()[0])
+				self.count_nodes += 1
+				self.root_node = AnyNode(name=str(self.count_nodes), label=data[classe].unique()[0])
 				new_node = self.root_node
 			else:
 				#normal leaf node.
-				new_node = AnyNode(id=data[classe].unique()[0],parent=parent_node, branch=branch)
+				self.count_nodes += 1
+				new_node = AnyNode(name=str(self.count_nodes), label=data[classe].unique()[0],parent=parent_node, branch=branch)
 		else:
 			#Getting random attributes
-			attr_list = self.getRandomAttributes(data)
+			attr_list = self.getRandomAttributes(data, self.attributes_to_consider)
 
 			#Getting attribute that maximizes information gain
 			attr_max_gain, max_gain = self.getAttributeWithMaxInfoGain(attr_list, data)
+
+			if self.verbose is not None:
+				print('Attribute with max information gain: ' + attr_max_gain + '. Information gain: ' + str(max_gain))
 
 			#if not have information gain
 			if max_gain == 0.0:
 				if self.root_node is None:
 					majority_class = data[classe].value_counts().idxmax()
-					self.root_node = AnyNode(id=majority_class)
+					self.count_nodes += 1
+					self.root_node = AnyNode(name=str(self.count_nodes), label=majority_class, information_gain=max_gain)
 					new_node = self.root_node
 				else:
 					#normal leaf node.
-					new_node = AnyNode(id=parent_node.majority_class,parent=parent_node, branch=branch)
+					self.count_nodes += 1
+					new_node = AnyNode(name=str(self.count_nodes), label=parent_node.majority_class,parent=parent_node, branch=branch, information_gain=max_gain )
 
 				#If not have information gain, return root_node.
 				return self.root_node
@@ -202,18 +214,24 @@ class decisionTree:
 			if self.data_desc[attr_max_gain] == "nominal":
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = AnyNode(id=attr_max_gain, majority_class=majority_class)
+					self.count_nodes += 1
+					self.root_node = AnyNode(name=str(self.count_nodes), label=attr_max_gain, majority_class=majority_class, information_gain=max_gain)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node,branch=branch, majority_class=majority_class)
+					self.count_nodes += 1
+					new_parent_node = AnyNode(name=str(self.count_nodes), label=attr_max_gain,parent=parent_node,branch=branch, majority_class=majority_class, information_gain=max_gain)
 
 				#Getting the unique values of this attribute
 				unique_attr_values = data[attr_max_gain].unique()
 
 				#Iterating over the branches
 				for attr_value in unique_attr_values:
-					#print('Generating decision tree from ' + str(attr_max_gain) + '-' + str(attr_value))
+					if self.verbose is not None:
+						print('Generating decision tree from ' + str(attr_max_gain) + '-' + str(attr_value))
 					new_data = data[data[attr_max_gain]==attr_value]
+					if self.verbose is not None:
+						print(new_data)
+						print('\n')
 					self.generateDecisionTree(new_parent_node, new_data,attr_value)
 			
 			elif self.data_desc[attr_max_gain] == "numeric":
@@ -222,10 +240,12 @@ class decisionTree:
 
 				#adding node to decision tree
 				if parent_node == None:
-					self.root_node = AnyNode(id=attr_max_gain, mean_attr=mean_attr, majority_class=majority_class)
+					self.count_nodes += 1
+					self.root_node = AnyNode(name=str(self.count_nodes), label=attr_max_gain, mean_attr=mean_attr, majority_class=majority_class, information_gain=max_gain)
 					new_parent_node = self.root_node
 				else:
-					new_parent_node = AnyNode(id=attr_max_gain,parent=parent_node, branch=branch, mean_attr=mean_attr, majority_class=majority_class)
+					self.count_nodes += 1
+					new_parent_node = AnyNode(name=str(self.count_nodes), label=attr_max_gain,parent=parent_node, branch=branch, mean_attr=mean_attr, majority_class=majority_class, information_gain=max_gain)
 
 				#Splitting examples values in "less than" and "greater than" the mean
 				less_than_values = data[data[attr_max_gain] < mean_attr]
@@ -233,9 +253,15 @@ class decisionTree:
 
 				#Generate decision tree for less than values data
 				self.generateDecisionTree(new_parent_node, less_than_values,"left-branch",mean_attr)
+				if self.verbose is not None:
+					print('Generating decision tree from left branch (less values) - ' + str(mean_attr))
+					print(less_than_values)
 
 				#Generate decision tree for less than values data
 				self.generateDecisionTree(new_parent_node, greater_than_values, "right-branch",mean_attr)
+				if self.verbose is not None:
+					print('Generating decision tree from right branch (greater values) - ' + str(mean_attr))
+					print(greater_than_values)
 
 			return self.root_node
 
@@ -243,6 +269,28 @@ class decisionTree:
 		print(RenderTree(root_node))
 		#for pre, fill, node in RenderTree(root_node):
 			#print("%s%s" % (pre, node.name))
+
+	def exportDecisionTreeToPNG(self, root_node, filename):
+
+		def node_attr_func(node):
+			#print('gaaaaa')
+			try:
+				node.information_gain
+			except AttributeError as error:
+				return 'label="%s"' % (node.label)
+			else:
+				return 'label="%s"' % (node.label + ' - ganho: ' + "{0:.3f}".format(node.information_gain))
+
+		def edge_attr_func(node, child):
+			return 'label="%s"' % (str(child.branch))
+
+		def edge_type_func(node, child):
+			return '--'
+
+		DotExporter(root_node, graph="graph",
+                       nodeattrfunc=node_attr_func,
+                       edgeattrfunc=edge_attr_func,
+                       edgetypefunc=edge_type_func).to_picture(filename)
 
 	def predict_instance(self,instance, root_node=None):
 		#Initializing prediction to None
@@ -281,13 +329,8 @@ class decisionTree:
 							prediction = self.predict_instance(instance,current_root_node)
 							return prediction
 
-
 			if prediction == None:
-				#print('prediction None ###############')
 				#returning the majority class from the parent node (in case the decisionTree don't manage to get a prediction)
-				#self.renderDecisionTree(self.root_node)
-				#print(current_root_node)
 				return current_root_node.majority_class
-		#self.renderDecisionTree(self.root_node)
 
 		return prediction

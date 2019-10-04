@@ -5,12 +5,13 @@ from decisionTree import decisionTree as dt
 
 class randomForest:
 
-	def __init__(self, n_tree, data, data_desc):
+	def __init__(self, n_tree, data, data_desc, n_attr=None):
 		#Number of trees to be generated
 		self.n_tree = n_tree
 		self.data = data
 		self.data_desc = data_desc
 		self.decisionTrees = None
+		self.n_attr = n_attr
 
 	def bootstrap(self, n_iter, data):
 		#list of bootstraps ([training_data, test_data])
@@ -26,9 +27,6 @@ class randomForest:
 			for x in range(data.shape[0]):
 				#gererating random numbers between 0 and data.shape[0]-1
 				indexs_used.append(random.randint(0,data.shape[0]-1))
-
-			#sorting
-			#indexs_used = sorted(indexs_used)
 
 			#getting elements not used
 			indexs_not_used = list(np.setdiff1d(all_indexs, indexs_used))
