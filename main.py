@@ -19,7 +19,7 @@ import os
 @click.option('--ntree', required=True, type=int, help='Number of decision Trees to generate random forest')
 @click.option('--kfolds', required=True, type=int, help='Number of folds to divide the data for cross validation')
 @click.option('--repeat_cv', required=True, type=int, help='Number of cross validation to be executed (repeated cross validation)')
-@click.option('--n_attr', type=int, help='Number of attributes to consider when obtain max information gain to do a new data division')
+#@click.option('--n_attr', type=int, help='Number of attributes to consider when obtain max information gain to do a new data division')
 def main(dataset, ntree, kfolds, repeat_cv):
 	#Getting time at the beginning of the execution
 	start_time = time.time()

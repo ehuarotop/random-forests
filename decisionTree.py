@@ -151,7 +151,8 @@ class decisionTree:
 
 		sorted_info_gain = dict(sorted(info_gain.items(), key=lambda kv: kv[1], reverse=True))
 
-		print('Information Gains: ', sorted_info_gain)
+		if self.verbose is not None:
+			print('Information Gains: ', sorted_info_gain)
 
 		return list(sorted_info_gain.keys())[0], sorted_info_gain[list(sorted_info_gain.keys())[0]]
 
@@ -304,25 +305,25 @@ class decisionTree:
 
 		#Stop condition (leaf node)
 		if current_root_node.is_leaf:
-			prediction = current_root_node.id
+			prediction = current_root_node.label
 		else:
 			#Iterate recursively between children of the current root node
-			if self.data_desc[current_root_node.id] == "nominal":
+			if self.data_desc[current_root_node.label] == "nominal":
 				#nominal case
 				for children in current_root_node.children:
-					if children.branch == instance[current_root_node.id]:
+					if children.branch == instance[current_root_node.label]:
 						current_root_node = children
 						prediction = self.predict_instance(instance, current_root_node)
 						return prediction
-			elif self.data_desc[current_root_node.id] == "numeric":
+			elif self.data_desc[current_root_node.label] == "numeric":
 				#Numeric case
-				if instance[current_root_node.id] < current_root_node.mean_attr:
+				if instance[current_root_node.label] < current_root_node.mean_attr:
 					for children in current_root_node.children:
 						if children.branch == "left-branch":
 							current_root_node = children
 							prediction = self.predict_instance(instance,current_root_node)
 							return prediction
-				elif instance[current_root_node.id] >= current_root_node.mean_attr:
+				elif instance[current_root_node.label] >= current_root_node.mean_attr:
 					for children in current_root_node.children:
 						if children.branch == "right-branch":
 							current_root_node = children
